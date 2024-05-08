@@ -39,66 +39,67 @@ def check_expiry_time():
 
 def bool_hour_passed(timestamp):
     # Convert the timestamp string to a datetime object
-    timestamp_datetime = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
+    objDatetimeArg = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
     
     # Get the current time
-    current_time = datetime.now()
+    objCurrentDatetime = datetime.now()
     
     # Calculate the difference between the current time and the timestamp
-    time_difference = current_time - timestamp_datetime
+    differenceTime = objCurrentDatetime - objDatetimeArg
 
     # Check if the difference is greater than or equal to 60 minutes
-    return time_difference >= timedelta(minutes=60)
+    return differenceTime >= timedelta(minutes=60)
 
 def fetch_token_credential():
     # Spotify API endpoint for authorization
-    authorization_base_url = 'https://accounts.spotify.com/authorize'
+    STR_AUTHENTICATE_URL = 'https://accounts.spotify.com/authorize'
 
     # Your application's client ID and client secret
-    client_id = input('Enter the Client ID from the Spotify Developer App: ')
-    client_secret = input('Enter the Client Secret from the Spotify Developer App: ')
+    strClientId = input('Enter the Client ID from the Spotify Developer App: ')
+    strClientSecret = input('Enter the Client Secret from the Spotify Developer App: ')
 
     # Define the scopes your application requires
-    scopes = ['playlist-modify-public', 'playlist-modify-private']
+    listAuthScopesNeeded = ['playlist-modify-public', 'playlist-modify-private']
 
     # Redirect URI for your application (must be registered in your Spotify Developer Dashboard)
-    redirect_uri = 'https://localhost'
+    STR_URL_REDIRECT = 'https://localhost'
 
     # Construct the authorization URL with the required parameters
     params = {
-        'client_id': client_id,
-        'redirect_uri': redirect_uri,
-        'scope': ' '.join(scopes),
+        'client_id': strClientId,
+        'redirect_uri': STR_URL_REDIRECT,
+        'scope': ' '.join(listAuthScopesNeeded),
         'response_type': 'code'
     }
-    authorization_url = authorization_base_url + '?' + urlencode(params)
+    STR_URL_AUTH_PARAMS = STR_AUTHENTICATE_URL + '?' + urlencode(params)
 
     # Open the authorization URL in a browser to allow the user to authenticate and authorize your application
     print("\nPlease go to the following URL and authorize access:\n")
-    print(authorization_url)
+    print(STR_URL_AUTH_PARAMS)
 
     # After the user authorizes your application, they will be redirected to your redirect URI with an authorization code
-    authorization_code = input("\nEnter the authorization code from the callback URL (found on the ?code URL param):\n")
+    strCodeAuthorization = input("\nEnter the authorization code from the callback URL (found on the ?code URL param):\n")
 
     # Exchange the authorization code for an access token
-    token_url = 'https://accounts.spotify.com/api/token'
-    token_data = {
+    STR_URL_TOKEN_REQ = 'https://accounts.spotify.com/api/token'
+    bodyParamsTokenData = {
         'grant_type': 'authorization_code',
-        'code': authorization_code,
-        'redirect_uri': redirect_uri,
-        'client_id': client_id,
-        'client_secret': client_secret,
+        'code': strCodeAuthorization,
+        'redirect_uri': STR_URL_REDIRECT,
+        'client_id': strClientId,
+        'client_secret': strClientSecret,
     }
-    response = requests.post(token_url, data=token_data)
+    
+    objResponseTokenAuth = requests.post(STR_URL_TOKEN_REQ, data=bodyParamsTokenData)
 
 
     # TODO: Return early when invalid response returned
 
     # Extract the access token from the response
-    access_token = response.json().get('access_token')
+    strAccessTokenGenerated = objResponseTokenAuth.json().get('access_token')
 
     # Now you can use the access token to make requests to the Spotify API with the specified scopes
-    print("Valid Access token credential:\n", access_token)
+    print("Valid Access token credential:\n", strAccessTokenGenerated)
 
     # TODO: write the credential to the json token
 

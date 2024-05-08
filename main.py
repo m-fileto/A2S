@@ -7,12 +7,12 @@ def check_token_exist():
     # Check if the JSON file exists in the current directory
     if not os.path.exists('token.json'):
         # Create a new JSON object with today's date and time as a key
-        data = {'created': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        dictJsonData = {'created': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                 'last_updated': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                 'credential': None}
         # Write the JSON data to the file
         with open('token.json', 'w') as f:
-            json.dump(data, f, indent=4)
+            json.dump(dictJsonData, f, indent=4)
         
         print(f'Token JSON file not found. Creating a JSON with timestamp and access token: "token.json"')
         print('Obtaining a new access token credential.\n')
