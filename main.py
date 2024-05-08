@@ -14,13 +14,12 @@ def check_token_exist():
         with open('token.json', 'w') as f:
             json.dump(dictJsonData, f, indent=4)
         
-        print(f'Token JSON file not found. Creating a JSON with timestamp and access token: "token.json"')
-        print('Obtaining a new access token credential.\n')
+        print(f'[INFO] Token JSON file not found. Creating a JSON with timestamp and access token: "token.json"')
+        print('[INFO] Obtaining a new access token credential.\n')
 
 
     else:
-        print(f'JSON file already exists: "token.json". Checking last updated time')
-        
+        print(f'[INFO] JSON file already exists: "token.json". Checking last updated time')
         check_expiry_time()
 
 
@@ -29,5 +28,5 @@ def check_token_exist():
 # TODO: Add function to add tracks to Spotify playlist
 
 if __name__ == '__main__':
-    print('Running Apple 2 Spotify Program.')
+    print('\n\t\tRunning Apple 2 Spotify Program.\n')
     check_token_exist()

@@ -5,12 +5,16 @@ import json
 from urllib.parse import urlencode
 
 
+def print_error_exit_message():
+    print('\n\n\t\tExiting Program due to ERROR...\n\n')
+
 # Spotify access tokens are only valid for 1 hour session
 def check_expiry_time():
     
     # Check if the JSON file exists in the current directory
     if not os.path.exists('token.json'):
-        print('\nERROR! Could not find "token.json" after program initialization. Please rerun program.')
+        print('\n[ERROR] Could not find "token.json" after program initialization. Please rerun program.')
+        print_error_exit_message()
     else:
         # Read existing data from the file
         jsonData = None
@@ -20,8 +24,10 @@ def check_expiry_time():
         lastUpdatedTimeStamp = jsonData['last_updated']
         hasHourPassed = bool_hour_passed(lastUpdatedTimeStamp)
         if hasHourPassed == True:
+            print('[WARN] More than 1 hour has passed! A new authorization token will be requested with your input.')
             fetch_token_credential()
         elif jsonData['credential'] is None:
+            print('[INFO] Fetching valid token credential since this is null. (Most likely due to first time program execution)')
             fetch_token_credential()
         else:
             timeUpdated = datetime.strptime(lastUpdatedTimeStamp, '%Y-%m-%d %H:%M:%S')
@@ -54,8 +60,8 @@ def fetch_token_credential():
     STR_AUTHENTICATE_URL = 'https://accounts.spotify.com/authorize'
 
     # Your application's client ID and client secret
-    strClientId = input('Enter the Client ID from the Spotify Developer App: ')
-    strClientSecret = input('Enter the Client Secret from the Spotify Developer App: ')
+    strClientId = input('\nEnter the Client ID from the Spotify Developer App:\n')
+    strClientSecret = input('\nEnter the Client Secret from the Spotify Developer App:\n')
 
     # Define the scopes your application requires
     listAuthScopesNeeded = ['playlist-modify-public', 'playlist-modify-private']
@@ -73,8 +79,8 @@ def fetch_token_credential():
     STR_URL_AUTH_PARAMS = STR_AUTHENTICATE_URL + '?' + urlencode(params)
 
     # Open the authorization URL in a browser to allow the user to authenticate and authorize your application
-    print("\nPlease go to the following URL and authorize access:\n")
-    print(STR_URL_AUTH_PARAMS)
+    print("\n[INFO] Please go to the following URL and authorize access:")
+    print(f'[URL -->] {STR_URL_AUTH_PARAMS}')
 
     # After the user authorizes your application, they will be redirected to your redirect URI with an authorization code
     strCodeAuthorization = input("\nEnter the authorization code from the callback URL (found on the ?code URL param):\n")
@@ -91,8 +97,9 @@ def fetch_token_credential():
     
     objResponseTokenAuth = requests.post(STR_URL_TOKEN_REQ, data=bodyParamsTokenData)
 
-
-    # TODO: Return early when invalid response returned
+    if objResponseTokenAuth.status_code >= 400 and objResponseTokenAuth.status_code < 500:
+        print(f'\n[ERROR] Status code returned: `{objResponseTokenAuth.status_code}` indicating that there is an issue generating a valid token credential. Please verify that your Client ID & Client Secret match your Spotify Developer App. Message from Spotify network request: "{objResponseTokenAuth.reason}"')
+        print_error_exit_message()
 
     # Extract the access token from the response
     strAccessTokenGenerated = objResponseTokenAuth.json().get('access_token')
@@ -100,7 +107,7 @@ def fetch_token_credential():
     # Now you can use the access token to make requests to the Spotify API with the specified scopes
     print("Valid Access token credential:\n", strAccessTokenGenerated)
 
-    # TODO: write the credential to the json token
+    # TODO: fetch data of access token and write the credential to the json token key-val
 
     # with open('token.json', 'w') as file:
     #     data = {'access_token': access_token}
