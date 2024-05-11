@@ -2,7 +2,7 @@ import os
 from datetime import datetime, timedelta
 import requests
 import json
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse, parse_qs
 
 
 def print_error_exit_message():
@@ -25,10 +25,10 @@ def check_expiry_time():
         hasHourPassed = bool_hour_passed(lastUpdatedTimeStamp)
         if hasHourPassed == True:
             print('[WARN] More than 1 hour has passed! A new authorization token will be requested with your input.')
-            fetch_token_credential()
+            fetch_token_credential(jsonData)
         elif jsonData['credential'] is None:
-            print('[INFO] Fetching valid token credential since this is null. (Most likely due to first time program execution)')
-            fetch_token_credential()
+            print('[INFO] Fetching valid token credential since this is null. (Most likely due to first time program execution of lack of 1st success in auth request)')
+            fetch_token_credential(jsonData)
         else:
             timeUpdated = datetime.strptime(lastUpdatedTimeStamp, '%Y-%m-%d %H:%M:%S')
             timeRightNow = datetime.now()
@@ -55,15 +55,42 @@ def bool_hour_passed(timestamp):
     # Check if the difference is greater than or equal to 60 minutes
     return differenceTime >= timedelta(minutes=60)
 
-def fetch_token_credential():
+def fetch_token_credential(jsonToken):
     # Spotify API endpoint for authorization
     STR_AUTHENTICATE_URL = 'https://accounts.spotify.com/authorize'
 
+    jsonClient = None
+    with open('client.json', 'r') as f:
+        jsonClient = json.load(f)
+    
+    if jsonClient == None:
+        print(f'[ERROR] "client.json" does not seem to exist or cannot be loaded. Make sure "client.json" exists and has keys populated.')
+        print_error_exit_message()
+        return 
+    elif 'client_id' not in jsonClient:
+        print(f'[ERROR] the key "client_id" is not present in "client.json". Cannot retreive auth token, please rerun program to add the key in "client.json"')
+        print_error_exit_message()
+        return
+    elif jsonClient['client_id'] is None:
+        print(f'[ERROR] the key "client_id" is present but does not have a valid value. Cannot retreive auth token, please rereun the program to update the key in "client.json"')
+        print_error_exit_message()
+        return 
+    elif 'client_secret' not in jsonClient:
+        print(f'[ERROR] the key "client_secret" is not present in "client.json". Cannot retreive auth token, please rerun program to add the key in "client.json"')
+        print_error_exit_message()
+        return
+    elif jsonClient['client_secret'] is None:
+        print(f'[ERROR] the key "client_secret" is present but does not have a valid value. Cannot retreive auth token, please rereun the program to update the key in "client.json"')
+        print_error_exit_message()
+        return 
+
     # Your application's client ID and client secret
-    strClientId = input('\nEnter the Client ID from the Spotify Developer App:\n')
-    strClientSecret = input('\nEnter the Client Secret from the Spotify Developer App:\n')
+    print('[INFO] Using the "client_id" and "client_secret" values from "client.json" for auth request.')
+    strClientId = jsonClient['client_id']
+    strClientSecret = jsonClient['client_secret']
 
     # Define the scopes your application requires
+    # This allows us to modify both PUBLIC & PRIVATE playlists
     listAuthScopesNeeded = ['playlist-modify-public', 'playlist-modify-private']
 
     # Redirect URI for your application (must be registered in your Spotify Developer Dashboard)
@@ -79,11 +106,12 @@ def fetch_token_credential():
     STR_URL_AUTH_PARAMS = STR_AUTHENTICATE_URL + '?' + urlencode(params)
 
     # Open the authorization URL in a browser to allow the user to authenticate and authorize your application
-    print("\n[INFO] Please go to the following URL and authorize access:")
-    print(f'[URL -->] {STR_URL_AUTH_PARAMS}')
+    #   NEED TO LOGIN TO SPOTIFY IF NOT ALREADY LOGGED IN
+    print("\n[INFO] (Need to be logged into Spotify) Please go to the following URL and authorize access (Note this will change the access code each time you make a new request):")
+    print(f'\n[Visit URL Below]\n\n--->\t{STR_URL_AUTH_PARAMS}')
 
     # After the user authorizes your application, they will be redirected to your redirect URI with an authorization code
-    strCodeAuthorization = input("\nEnter the authorization code from the callback URL (found on the ?code URL param):\n")
+    strCodeAuthorization = input("\nEnter the authorization code provided by visiting the URL above (found on the value for `?code=` URL param):\n")
 
     # Exchange the authorization code for an access token
     STR_URL_TOKEN_REQ = 'https://accounts.spotify.com/api/token'
@@ -100,6 +128,7 @@ def fetch_token_credential():
     if objResponseTokenAuth.status_code >= 400 and objResponseTokenAuth.status_code < 500:
         print(f'\n[ERROR] Status code returned: `{objResponseTokenAuth.status_code}` indicating that there is an issue generating a valid token credential. Please verify that your Client ID & Client Secret match your Spotify Developer App. Message from Spotify network request: "{objResponseTokenAuth.reason}"')
         print_error_exit_message()
+        return
 
     # Extract the access token from the response
     strAccessTokenGenerated = objResponseTokenAuth.json().get('access_token')
@@ -107,9 +136,10 @@ def fetch_token_credential():
     # Now you can use the access token to make requests to the Spotify API with the specified scopes
     print("Valid Access token credential:\n", strAccessTokenGenerated)
 
-    # TODO: fetch data of access token and write the credential to the json token key-val
+    # Succesfully got credential so update token json
+    jsonToken['credential'] = strAccessTokenGenerated
+    
+    with open('token.json', 'w') as file:
+        json.dump(jsonToken, file, indent=4)
 
-    # with open('token.json', 'w') as file:
-    #     data = {'access_token': access_token}
-
-    #     json.dump(data, file)
+    print('[SUCCESS] Succesfully updated credential in "token.json"\n')
