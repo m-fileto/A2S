@@ -1,5 +1,11 @@
 # A2S
-Migrate apple playlist to spotify all with a python script
+Migrate apple/audio playlist to spotify all with a python script
+
+## Development Progress (Until Completed)
+1. Request Valid Authentication (Complete)
+2. Process TSV
+3. Search Tracks on Spotify
+4. Add tracks to playlist
 
 
 ## Requirements
