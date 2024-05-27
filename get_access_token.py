@@ -142,4 +142,4 @@ def fetch_token_credential(jsonToken):
     with open('token.json', 'w') as file:
         json.dump(jsonToken, file, indent=4)
 
-    print('[SUCCESS] Succesfully updated credential in "token.json"\n')
+    print('\n[SUCCESS] Succesfully updated credential in "token.json"\n')

@@ -84,9 +84,9 @@ def user_interaction_menu():
         MENU:
         1. Run program end to end
         2. Create JSON client info
-        3. Check token exist
+        3. Token Authentication Check
         4. Process playlist info for Spotify
-        q. Quit Program ()
+        q. Quit Program
         """)
         user_input = input("Enter a number from the menu or 'q' to exit: ")
         print('\n')
