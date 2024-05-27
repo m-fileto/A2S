@@ -7,6 +7,7 @@ from urllib.parse import urlencode, urlparse, parse_qs
 
 def print_error_exit_message():
     print('\n\n\t\tExiting Program due to ERROR...\n\n')
+    exit()
 
 # Spotify access tokens are only valid for 1 hour session
 def check_expiry_time():
@@ -134,11 +135,11 @@ def fetch_token_credential(jsonToken):
     strAccessTokenGenerated = objResponseTokenAuth.json().get('access_token')
 
     # Now you can use the access token to make requests to the Spotify API with the specified scopes
-    print("Valid Access token credential:\n", strAccessTokenGenerated)
+    print("\nValid Access token credential:\n", strAccessTokenGenerated)
 
     # Succesfully got credential so update token json
     jsonToken['credential'] = strAccessTokenGenerated
-    
+    jsonToken['last_updated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     with open('token.json', 'w') as file:
         json.dump(jsonToken, file, indent=4)
 

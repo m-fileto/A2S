@@ -5,6 +5,7 @@ import requests
 
 def print_error_exit_message_process_tsv(errMsg):
     print('\n\n\t\tExiting Program due to ERROR. Msg: {errMsg}...\n\n')
+    exit()
 
 def search_playlists_info():
     strFileName = input("Enter the playlsist file name (e.g. MyPlaylist.tsv or MyPlaylist): ")
@@ -36,14 +37,14 @@ def process_tsv_file(tsv_file_name):
                 print(f'\n[Array -->]: {first_line_array}')
 
     print('\n^^^^ With the array above indicate the column numbers of the artist name and track name in the TSV file (Index starts at 1).')
-    print('\nBe sure to examine the column number for Artist name since albums tend to be the name of the artist. This will cause downstream errors/not found in spotify query search!')
-    artist_column = input(f"\nEnter the column number that indicates ARTIST name in the {tsv_file_name} file: ")
-    track_column = input(f"\nEnter the column number that indicates TRACK name in the {tsv_file_name} file: ")
+    print('Be sure to examine the column number for Artist name since albums tend to be the name of the artist. This will cause downstream errors/not found in spotify query search!')
+    artist_column = input(f"\nEnter the column number from the array example above that indicates ARTIST name in the {tsv_file_name} file: ")
+    track_column = input(f"Enter the column number from the array example above that indicates TRACK name in the {tsv_file_name} file: ")
 
     while not artist_column.isdigit() or not track_column.isdigit():
         print('\n[ERROR] Please enter a valid column number.')
-        artist_column = input(f"\nEnter the column number that indicates ARTIST name in the {tsv_file_name} file: ")
-        track_column = input(f"\nEnter the column number that indicates TRACK name in the {tsv_file_name} file: ")
+        artist_column = input(f"\nEnter the column number from the array example above that indicates ARTIST name in the {tsv_file_name} file: ")
+        track_column = input(f"Enter the column number from the array example above that indicates TRACK name in the {tsv_file_name} file: ")
 
     # Assumes that index number starts with 1 
     artist_column = int(artist_column) - 1
@@ -66,18 +67,9 @@ def process_tsv_file(tsv_file_name):
                         else:
                             dictionary[artist_name].append(track_name)
 
-            # Generate a timestamp string in format YYYY-MM-DD_HH-MM-SS
-            timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-            # Add the timestamp to the filename
-            strPlaylistName = tsv_file_name
-            if strPlaylistName.endswith('.tsv'):
-                strPlaylistName = strPlaylistName[:-4]
-            json_file_name = f'{tsv_file_name}_{timestamp}.json'
-            json_file_path = os.path.join(directory, json_file_name)
-            with open(json_file_path, 'w') as f:
-                json.dump(dictionary, f, indent=4)
-            print(f'\n[INFO] Successfully created JSON file: {json_file_name}')
+            print(f'\n[INFO] Successfully generated dictionary of artist to track names')
             return search_tracks_in_spotify(dictionary, tsv_file_name)
+    
     print(f"\n[ERROR] {tsv_file_name} NOT found in the PlaylistsInfo directory! Please make sure the file exists in the directory or check spelling of file name.")
 
 def search_tracks_in_spotify(dictPlaylistData, fileName):
@@ -133,25 +125,91 @@ def search_tracks_in_spotify(dictPlaylistData, fileName):
                 print(f'\n[ERROR] Failed to search for track "{song}" with artist "{artist}". Status code: {response.status_code}')
                 if response.status_code == 401:
                     print(f'[ERROR] Access Token most likely expired!!! Run option to retreive access token.')
-                return []
+                    return []
     
     # Save the track IDs into a JSON file
     if len(list_track_ids) == 0:
         return print('\n[INFO] No track IDs found. Returning to menu.')
     else:
-        strPlaylistName = fileName
-        if strPlaylistName.endswith('.tsv'):
-            strPlaylistName = strPlaylistName[:-4]
-
-        strDate = datetime.now().strftime('%Y-%m-%d')
-        strTimestamp = datetime.now().strftime('%H-%M-%S')
-        strJsonFilename = f'tracks_{strPlaylistName}_{strDate}_{strTimestamp}.json'
         dictJsonData = {'track_ids': list_track_ids}
-       
-       # TODO: save to some other path to not bloat directory?
-        with open(os.path.join('PlaylistsInfo', strJsonFilename), 'w') as f:
-            json.dump(dictJsonData, f, indent=4)
-       
-        print(f'\n[INFO] Saved track IDs into JSON file: "{strJsonFilename}"')
+        add_tracks_to_playlist(dictJsonData)
 
-        # TODO: create new helper for adding to playlist now.
+def split_array_into_chunks(array, chunk_size):
+    chunks = []
+    for i in range(0, len(array), chunk_size):
+        chunks.append(array[i:i + chunk_size])
+    return chunks
+
+# This does NOT currently check for duplicates. Nice to have feature.
+def add_tracks_to_playlist(dictTrackData):
+    
+    # Load JSON data from file
+    jsonTokenData = None
+    with open('token.json') as f:
+        jsonTokenData = json.load(f)
+
+    accessToken: str = jsonTokenData['credential']
+    listTrackIds: list[str] = dictTrackData['track_ids']
+    playlistId = input(f'\nEnter the playlist ID on spotify (i.e. found in Browser URL after /playlist/):\n')
+    if playlistId.strip() == '':
+        return print_error_exit_message_process_tsv('Not a valid playlist id with empty string')    
+    
+    passedCheckPlyalist = check_tracks_already_in_playlist(playlistId, accessToken, listTrackIds)
+    if passedCheckPlyalist == False or passedCheckPlyalist == None:
+        return print_error_exit_message_process_tsv('Did not pass check for tracks already in playlist')
+    elif len(listTrackIds) == 0:
+        return print('\n[INFO] List of track IDs is empty after removing/checking for duplicates. Returning to menu.')
+
+    print('\n[INFO] Adding tracks to playlist...')
+    # Spotify API endpoint for adding to tracks (using POST HTTP Method)
+    url = f'https://api.spotify.com/v1/playlists/{playlistId}/tracks'
+
+    chunkApiReqs = split_array_into_chunks(listTrackIds, 100)
+    print(f'\n[INFO] There will be {len(chunkApiReqs)} requests made to add the chunked tracks to the playlist.\n')
+    for listChunkedTracks in chunkApiReqs:
+            listUriTracks = []
+            for trackId in listChunkedTracks:
+                uriFormat = 'spotify:track:' + trackId
+                listUriTracks.append(uriFormat)
+
+            # Authorization header with access token
+            headers = {
+                    'Authorization': f'Bearer {accessToken}',
+                    'Content-Type': 'application/json'
+            }
+            data = {
+                'uris': listUriTracks
+            }
+            response = requests.post(url=url, headers=headers, data=json.dumps(data))
+            
+            # Checking if request was successful
+            if response.status_code >= 200 and response.status_code < 300:
+                index = listChunkedTracks.index(trackId)
+                if index < len(listChunkedTracks) - 1:
+                    print(f"[INFO] Tracks added to playlist successfully. {len(listChunkedTracks) - index - 1} chunks left.")
+                else:
+                    print("[INFO] Tracks added to playlist successfully. This is the last chunk now returning to the main menu.")
+            else:
+                return print_error_exit_message_process_tsv('Failed to add tracks to playlist. Status code: ' + str(response.status_code) + '. Message:"' + response.message + '"')
+            
+def check_tracks_already_in_playlist(idPlaylist, accessToken,listTracks):
+    
+    print('\n[INFO] Checking if tracks already exist in playlist\n')
+
+    # Spotify API endpoint for search tracks in playlist (using GET HTTP Method)
+    url = f'https://api.spotify.com/v1/playlists/{idPlaylist}/tracks'
+    # Authorization header with access token
+    headers = { 'Authorization': f'Bearer {accessToken}'}
+
+    response = requests.get(url=url, headers=headers)
+    if response.status_code >= 200 and response.status_code < 300:
+        listPlaylistTracks = response.json()['items']
+        for track in listPlaylistTracks:
+            if track['track']['id'] in listTracks:
+                print(f'[INFO] Track "{track["track"]["name"]}" by artist: "{track["track"]["artists"][0]["name"]}" already in playlist. Removing track from request data structure.')
+                listTracks.remove(track['track']['id'])
+    else:
+        print(f'[ERROR] Failed to get tracks in playlist. Status code: "{response.status_code}"')
+        return False
+
+    return True

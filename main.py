@@ -71,6 +71,7 @@ def user_interaction_menu():
     print('2. You have a Spotify Developer account created and an app setup with the proper configuration')
     print('3. You are currently logged into Spotify on your web browser running this script.')
     print('4. You have a TSV of your desired playlist saved into the "PlaylistsInfo" directory of this program.')
+    print('5. You have a playlist created in Spotify to add tracks.')
     print('\nIf you DO NOT meet any of these requirements, please refer to the README.md file for more information before attempting.\n')
 
     strAcknowledge = input("\nDid you acknowledge the disclaimer above? (yes/no): ")
@@ -82,10 +83,10 @@ def user_interaction_menu():
     while True:
         print("""
         MENU:
-        1. Run program end to end
+        1. Run program end to end (steps 2 to 4)
         2. Create JSON client info
         3. Token Authentication Check
-        4. Process playlist info for Spotify
+        4. Process playlist info and add to Spotify Playlist
         q. Quit Program
         """)
         user_input = input("Enter a number from the menu or 'q' to exit: ")
@@ -93,6 +94,7 @@ def user_interaction_menu():
         if user_input == '1':
             create_json_client_info()
             check_token_exist()
+            search_playlists_info()
         elif user_input == '2':
             create_json_client_info()
         elif user_input == '3':
