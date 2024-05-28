@@ -23,6 +23,24 @@ Free, interactive and lightweight python script to help migrate apple/audio play
    5. Open a text editor or blank file in Notepad etc, paste the TSV and save it. You should see something like this if you followed the above steps. The red boxes from left to right are: the song name, and the artist name. Which is the minimum criteria needed in our TSV dump.
         ![](./photos/tsv_example.png)
 
+## TSV Format Expectation
+Since the software requires a TSV to process for adding songs to a Spotify playlist. The following format is required:
+1. No header columns in TSV (i.e. Field names: ARTIST, SONG_NAME, etc.)
+2. Track Name Column
+3. Artist Name Column
+
+**Column Numbers will be specified by index based 1 into the stream!** 
+
+(i.e. DON'T start with 0. The program will handle the index during execution)
+
+Example below of how a TSV was saved into the "PlaylistsInfo" directory for the columns used in the input section when extracting the columns needed for the data structure in API request.
+![](./photos/tsv_expectation.png)
+
+When parsing the TSV in the software, an example array will be outputted to the console based on the TSV input to allow the user to see what columns are needed. Using the screenshot above as reference, you can see that columns #1 and # 4 are used (for some reason there is an empty tab column when I pasted from Apple Music, hence skip the 2nd column).
+
+You'll pretty much specify these in the input section as seen below.
+![](./photos/array_tsv_parse.png)
+
 ## Running the Program
 1. Be logged into Spofity in your Web browser executing the script.
 2. Have the playlist created in Spotify.
