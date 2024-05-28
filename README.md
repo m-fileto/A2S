@@ -1,5 +1,5 @@
 # A2S
-Free, interactive and lightweight python script to help migrate apple/audio playlist to Spotify. Checks for songs in Spotify playlist before inserting duplciates.
+Free, interactive and lightweight python script to help migrate apple/audio playlist to Spotify. Also checks for songs in Spotify playlist before inserting duplciates.
 
 ## Requirements
 1. A Spotify Account
