@@ -43,7 +43,7 @@ Free, interactive and lightweight python script to help migrate apple/audio play
    ![TSV example saved in directory](./photos/playlist_tsv_saved.png)
    ![TSV file name input in program](./photos/playlist_tsv_input.png)
 10. Then when prompted, you'll enter the name of your playlist ID.
-    1. You can find this after the ```/playlists/``` in the URL. Example below
+    1. You can find this after the ```/playlist/``` in the URL. Example below
    ![Playlist ID Example](./photos/playlist_id_example.png)
 11. If all goes well, songs will be inserted into playlists.
     1.  With the exception of songs that are already present in the playlist to avoid duplicates. This however should be indicated in the output stream.
