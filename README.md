@@ -1,12 +1,5 @@
 # A2S
-Migrate apple/audio playlist to spotify all with a python script
-
-## Development Progress (Until Completed)
-1. Request Valid Authentication (Complete)
-2. Process TSV
-3. Search Tracks on Spotify
-4. Add tracks to playlist
-
+Free, interactive and lightweight python script to help migrate apple/audio playlist to Spotify. Checks for songs in Spotify playlist before inserting duplciates.
 
 ## Requirements
 1. A Spotify Account
@@ -31,4 +24,27 @@ Migrate apple/audio playlist to spotify all with a python script
         ![](./photos/tsv_example.png)
 
 ## Running the Program
-
+1. Be logged into Spofity in your Web browser executing the script.
+2. Have the playlist created in Spotify.
+3. Obtain a TSV of the songs you want to add to your spotify playlist. **2 Minimum fields needed are the Artist Name & Track Name**. Save this into the "PlaylistsInfo" directory of this project as a TSV file.
+   1. See Step # 3 in the Requirements for getting a TSV from the desktop application for Apple Music.
+4. Run ```python3 main.py``` in this project directory.
+   1. Alternatively you can pass the --debug flag to record a txt file of the output stream of your interaction. ```python3 main.py --debug```
+5. **Follow the console/output stream for instructions/directions!** 
+   1. There will be some user input needed as the script progresses.
+6. Disclaimer message will appear stating that you've met the requirements in order for the software to function as intended.
+7. Then you'll be presented with a couple of options:
+   1. **For running the program for the very 1st time**, you can choose option #1 to create the token json, fetch a credential token, and process the TSV to add to your spotify playlist.
+   2. For subsequent uses, you'll most likely need to use option 3 after 1 hour since the token that Spotify provides is only valid for 1 hour. Option 4 can be used anytime when the token is valid.
+8. Follow the prompts in the output stream to obtain the ```?code=``` param in the localhost URL when retreiving the access token credential.
+   1. Probably best if you paste this into some sort of editor to easily extract the string value after ```?code=```. E.g. below
+   ![](./photos/editor_url_code_example.png)
+9. Then when prompted, you'll enter the name of your TSV playlist file that was saved in "PlaylistsInfo".
+   ![TSV example saved in directory](./photos/playlist_tsv_saved.png)
+   ![TSV file name input in program](./photos/playlist_tsv_input.png)
+10. Then when prompted, you'll enter the name of your playlist ID.
+    1. You can find this after the ```/playlists/``` in the URL. Example below
+   ![Playlist ID Example](./photos/playlist_id_example.png)
+11. If all goes well, songs will be inserted into playlists.
+    1.  With the exception of songs that are already present in the playlist to avoid duplicates. This however should be indicated in the output stream.
+12. Any issues with the software like network requests, invalid tokens should be logged into the output stream.
